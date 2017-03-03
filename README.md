@@ -1,1 +1,1 @@
-# ist303 project
+# IST303 project
