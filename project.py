@@ -7,8 +7,9 @@ from Services import *
 from Party_bills import *
 from Rooms import *
 
-print('there are 3 functions:'+'\n'
+print('there are 4 functions:'+'\n'
         'register()'+'\n'
+        'reserve_room()'+'\n'
         'reserve_service()'+'\n'
         'cancel_service()')
 
@@ -46,7 +47,7 @@ for i in range(36):
     else:
         size = 'quadruple'
     if not os.path.isfile('rooms_schedules/' + str(i) + '.txt'):
-        rooms[i] = Rooms(i, size)
+        rooms[i] = Rooms(i, size, [])
         json.dump(rooms[i].schedule,open('rooms_schedules/' + str(i) + '.txt','w'))
     else:
         rooms[i] = Rooms(i, size, json.load(open('rooms_schedules/' + str(i) + '.txt','r')))
@@ -83,7 +84,7 @@ def register():
             guests = [] 
             guest_id = '0'
         party['members'].append(guest_name)
-        new_guest = Guests(guest_name,guest_id,party_id)
+        new_guest = Guests(guest_name,guest_id,party_id,[])
         new_guest.creat_schedule_file()
         new_guest.add_guest_to_guests(guests)
         
@@ -95,7 +96,7 @@ def register():
                 print('-------------------------------------------------------------') 
                 break
             elif group =='N' or group =='n' or group =='no':
-                new_party_bills = Party_bills(party['party_id'])
+                new_party_bills = Party_bills(party['party_id'],[])
                 new_party_bills.creat_party_bills_file()
                 party['phone_number'] = input('phone number: ')
                 json.dump(parties+[party],open('parties.txt','w'))
@@ -161,7 +162,7 @@ def reserve_service():
         the_guest.edit_schedule(guest_record,'add')
         services[service].edit_schedule(service_record,'add')
         charge = services[service].charge(length_of_service)
-        record = {'date_time': date_time, 'guest_name': guest_name, 'service': service, 'charge': charge}
+        record = {'date_time': date_time, 'guest_name': guest_name, 'item': service, 'charge': charge}
         party_bills = json.load(open('parties_bills/' + party_id + '.txt','r'))
         the_party_bills = Party_bills(party_id, party_bills)
         the_party_bills.edit_party_bills(record, 'add')
@@ -274,6 +275,7 @@ def reserve_room():
         print('check guest info')
         return
     checkin_date, checkout_date, checkin_date_string, checkout_date_string = Inputs.check_in_out_date()
+    days = (checkout_date - checkin_date).days
     n_single = int(input('how many single rooms the guest need: ')) # check the number <= 16
     n_double = int(input('how many double rooms the guest need: '))# check <= 16
     n_quadruple = int(input('how many quadruple rooms the guest need: ')) # check <= 4
@@ -304,9 +306,21 @@ def reserve_room():
         parties[index]['rooms'] = room_list
         parties[index]['checkin_date'] = checkin_date_string
         parties[index]['checkout_date'] = checkout_date_string
+        party_record = {'checkin_date': checkin_date_string, 'checkout_date': checkout_date_string, 'party_id': party_id}
+        for i in room_list:
+            rooms[i].edit_schedule(party_record,'add')
+            for j in range(days):
+                date = checkin_date + timedelta(j)
+                charge = rooms[i].charge(date)
+                bill_record = {'date_time': date.strftime('%m/%d/%Y'), 'guest_name': guest_name, 'item': rooms[i].size + ' room', 'charge': charge}
+                party_bills = json.load(open('parties_bills/' + party_id + '.txt','r'))
+                the_party_bills = Party_bills(party_id, party_bills)
+                the_party_bills.edit_party_bills(bill_record, 'add')
         json.dump(parties,open('parties.txt','w'))
+        print('-------------------------------------------------------------')
         print('reserve successfully!')
     else:
+        print('-------------------------------------------------------------')
         print('room not available!')
 
     

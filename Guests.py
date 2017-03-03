@@ -2,7 +2,7 @@ from datetime import *
 import json
 
 class Guests(object):
-    def __init__(self, guest_name, guest_id, party_id, schedule = []):
+    def __init__(self, guest_name, guest_id, party_id, schedule):
         self.guest_name = guest_name
         self.guest_id = guest_id
         self.party_id = party_id

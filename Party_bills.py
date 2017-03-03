@@ -1,7 +1,7 @@
 import json
 
 class Party_bills(object):
-    def __init__(self, party_id, bills = []):
+    def __init__(self, party_id, bills):
         self.party_id = party_id
         self.bills = bills
 
