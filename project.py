@@ -183,18 +183,9 @@ def cancel_service():
     global services
     time_of_canceling = datetime.now()
     guest_name = input('guest\'s name: ')
+    room_number = input('room number: ')
     guests = json.load(open('guests.txt','r'))
     parties = json.load(open('parties.txt','r'))
-    # for i in guests:
-    #     if i['guest_name'] == guest_name:
-    #         guest_id = i['guest_id']
-    #         party_id = i['party_id']
-    #         break
-    # else:
-    #     print('-------------------------------------------------------------')
-    #     print('chech the guest\'s information, and try again!')
-    #     return
-
     for i in parties:
         if guest_name in i['members'] and room_number in i['rooms']:
             party_id = i['party_id']
@@ -210,8 +201,7 @@ def cancel_service():
     else:
         print('-------------------------------------------------------------')
         print('chech the guest\'s information, and try again!')
-        return
-        
+        return    
 
     service = Inputs.service()
     date_time, start_time = Inputs.service_date_time()
