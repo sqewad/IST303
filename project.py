@@ -72,7 +72,7 @@ def register():
     party['members'] = []
     party['rooms'] = []
     party['checkin_date'] = ''
-    party['chceckout_date'] = ''
+    party['checkout_date'] = ''
 
     while True:
         guest_name = input('guest\'s name: ')
@@ -277,16 +277,16 @@ def reserve_room():
     parties = json.load(open('parties.txt','r'))
     for i in range(len(parties)):
         if guest_name in parties[i]['members'] and phone_number == parties[i]['phone_number']:
-            party_id = i['party_id']
+            party_id = parties[i]['party_id']
             index = i
             break
     else:
         print('check guest info')
         return
     checkin_date, checkout_date, checkin_date_string, checkout_date_string = Inputs.check_in_out_date()
-    n_single = input('how many single rooms the guest need: ') # check the number <= 16
-    n_double = input('how many double rooms the guest need: ') # check <= 16
-    n_quadruple = input('how many quadruple rooms the guest need: ') # check <= 4
+    n_single = int(input('how many single rooms the guest need: ')) # check the number <= 16
+    n_double = int(input('how many double rooms the guest need: '))# check <= 16
+    n_quadruple = int(input('how many quadruple rooms the guest need: ')) # check <= 4
     #single room available
     single_count = 0
     single_list = []
@@ -307,12 +307,12 @@ def reserve_room():
         if rooms[i].check_room_schedule(checkin_date,checkout_date):
             quadruple_list.append(i)
             quadruple_count +=1
-    if single_count <= n_single and \
-       double_count <= n_double and \
-       quadruple_count <= n_quadruple:
+    if single_count >= n_single and \
+       double_count >= n_double and \
+       quadruple_count >= n_quadruple:
         room_list = single_list[:n_single] + double_list[:n_double] + quadruple_list[:n_quadruple]
         parties[index]['rooms'] = room_list
-        parties[indes]['checkin_date'] = checkin_date_string
+        parties[index]['checkin_date'] = checkin_date_string
         parties[index]['checkout_date'] = checkout_date_string
         json.dump(parties,open('parties.txt','w'))
         print('reserve successfully!')
