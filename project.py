@@ -70,6 +70,9 @@ def register():
         party_id = '0'
     party['party_id'] = party_id
     party['members'] = []
+    party['rooms'] = []
+    party['checkin_date'] = ''
+    party['chceckout_date'] = ''
 
     while True:
         guest_name = input('guest\'s name: ')
@@ -109,10 +112,11 @@ def reserve_service():
     global services
     time_of_reserving = datetime.now().strftime('%m/%d/%Y %H:%M') # for cancelation
     guest_name = input('guest\'s name: ')
+    room_number = input('room number: ')
     guests = json.load(open('guests.txt','r'))
     parties = json.load(open('parties.txt','r'))
     for i in parties:
-        if guest_name in i['members'] and room_number in i['rooms']：
+        if guest_name in i['members'] and room_number in i['rooms']:
             party_id = i['party_id']
             break
     else:
@@ -120,7 +124,7 @@ def reserve_service():
         print('chech the guest\'s information, and try again!')
         return
     for i in guests:
-        if party_id = i['party_id'] and guest_name = i['guest_name']:
+        if party_id == i['party_id'] and guest_name == i['guest_name']:
             guest_id = i['guest_id']
             break
     else:
@@ -192,15 +196,15 @@ def cancel_service():
     #     return
 
     for i in parties:
-        if guest_name in i['members'] and room_number in i['rooms']：
-        party_id = i['party_id']
-        break
+        if guest_name in i['members'] and room_number in i['rooms']:
+            party_id = i['party_id']
+            break
     else:
         print('-------------------------------------------------------------')
         print('chech the guest\'s information, and try again!')
         return
     for i in guests:
-        if party_id = i['party_id'] and guest_name = i['guest_name']:
+        if party_id == i['party_id'] and guest_name == i['guest_name']:
             guest_id = i['guest_id']
             break
     else:
@@ -272,7 +276,7 @@ def reserve_room():
     phone_number = input('phone number: ') # need function to check if the phone number is valid
     parties = json.load(open('parties.txt','r'))
     for i in range(len(parties)):
-        if guest_name in parties[i]['members'] and phone_number == parties[i]['phone_number']：
+        if guest_name in parties[i]['members'] and phone_number == parties[i]['phone_number']:
             party_id = i['party_id']
             index = i
             break
