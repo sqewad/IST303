@@ -7,11 +7,6 @@ from Services import *
 from Party_bills import *
 from Rooms import *
 
-print('there are 4 functions:'+'\n'
-        'register()'+'\n'
-        'reserve_room()'+'\n'
-        'reserve_service()'+'\n'
-        'cancel_service()')
 
 
 # create folders
@@ -334,8 +329,22 @@ def cancel_room():
 ################################################################################################
 ################################################################################################
 
-
-
-
-
+while True:
+    print('1.register'+'\n'
+          '2.reserve_room'+'\n'
+          '3.reserve_service'+'\n'
+          '4.cancel_service'+'\n'
+          '0.exit')
+    num = int(input('choose one: '))
+    if num == 1:
+        register()
+    elif num == 2:
+        reserve_room()
+    elif num == 3:
+        reserve_service()
+    elif num == 4:
+        cancel_service()
+    elif num == 0:
+        break
+        
     
