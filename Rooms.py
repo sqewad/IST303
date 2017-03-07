@@ -1,15 +1,15 @@
-from datetime import *
+from datetime import datetime
 import json
 
 class Rooms(object):
-    def __init__(self,room_number, size, schedule):
+    def __init__(self, room_number, size, schedule):
         self.room_number = room_number
         self.size = size
-        self.price = {   'seasons' :{'week_day':{'single':175,'double':325,'quadruple':600}, \
-                                     'weekend' :{'single':205,'double':355,'quadruple':630}},\
-                      'off_seasons':{'week_day':{'single':140,'double':260,'quadruple':480}, \
-                                     'weekend' :{'single':170,'double':290,'quadruple':510}}}
-        self.schedule = schedule  
+        self.price = {'seasons':{'week_day':{'single':175, 'double':325, 'quadruple':600},
+                                 'weekend' :{'single':205, 'double':355, 'quadruple':630}},
+                      'off_seasons':{'week_day':{'single':140, 'double':260, 'quadruple':480},
+                                     'weekend' :{'single':170, 'double':290, 'quadruple':510}}}
+        self.schedule = schedule
 
     def check_room_schedule(self, checkin_date, checkout_date):
         for i in self.schedule:
@@ -24,7 +24,7 @@ class Rooms(object):
         elif edit == 'del':
             self.schedule.remove(record)
         # record = {'chechin_date': MM/DD/YYYY, 'checkout_date': MM/DD/YYYY, 'party_id'：'x'}
-        json.dump(self.schedule,open('rooms_schedules/' + str(self.room_number) + '.txt','w'))
+        json.dump(self.schedule, open('rooms_schedules/' + str(self.room_number) + '.txt', 'w'))
 
     def charge(self, date):
         if datetime(date.year, 1, 16) <= date <= datetime(date.year, 5, 14) or \
