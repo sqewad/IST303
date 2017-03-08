@@ -70,14 +70,14 @@ def service():
 
 def service_date_time():
     while True:
-        date_time = input('service\'s date and time (MM/DD/YYYY HH:MM): ')
+        date_time_string = input('service\'s date and time (MM/DD/YYYY HH:MM): ')
         try:
-            start_time = datetime.strptime(date_time, "%m/%d/%Y %H:%M")
+            start_time = datetime.strptime(date_time_string, "%m/%d/%Y %H:%M")
             break
         except ValueError:
             print('-------------------------------------------------------------')
             print('please check the datetime and try again!')
-    return date_time, start_time
+    return date_time_string, start_time
 
 def check_in_out_date():
     now = datetime.now()

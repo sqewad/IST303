@@ -45,11 +45,12 @@ for i in range(36):
         size = 'double'
     else:
         size = 'quadruple'
-    if not os.path.isfile('rooms_schedules/' + str(i) + '.txt'):
-        rooms[i] = Rooms(i, size, [])
-        json.dump(rooms[i].schedule, open('rooms_schedules/' + str(i) + '.txt', 'w'))
+    room_number = ('0'*3 + str(i))[-3:]
+    if not os.path.isfile('rooms_schedules/' + room_number + '.txt'):
+        rooms[i] = Rooms(room_number, size, [])
+        json.dump(rooms[i].schedule, open('rooms_schedules/' + room_number + '.txt', 'w'))
     else:
-        rooms[i] = Rooms(i, size, json.load(open('rooms_schedules/' + str(i) + '.txt', 'r')))
+        rooms[i] = Rooms(room_number, size, json.load(open('rooms_schedules/' + room_number + '.txt', 'r')))
 
 
 ################################################################################################
@@ -104,7 +105,7 @@ def register():
                 print('-------------------------------------------------------------')
                 print('add party successfully')
                 print('-------------------------------------------------------------')
-                return
+                return 
             else:
                 print('-------------------------------------------------------------')
                 print('type again. Y/N ')
@@ -121,6 +122,8 @@ def reserve_service():
     for i in parties:
         if guest_name in i['members'] and room_number in i['rooms']:
             party_id = i['party_id']
+            checkin_date_string = i['checkin_date']
+            checkout_date_string = i['checkout_date']
             break
     else:
         print('-------------------------------------------------------------')
@@ -140,24 +143,40 @@ def reserve_service():
     service = Inputs.service()
 
     while True:
-        date_time, start_time = Inputs.service_date_time()
+        date_time_string, start_time = Inputs.service_date_time()
         if start_time >= datetime.now():
-            break
+            if datetime.strptime(checkin_date_string, "%m/%d/%Y") + timedelta(0, 15*3600) > start_time or \
+               datetime.strptime(checkout_date_string, "%m/%d/%Y") + timedelta(0, 12*3600) <= start_time:
+                while True:
+                    print('-------------------------------------------------------------')
+                    print('0. please reserve room for that time first or' + '\n'
+                          '1. change the service time')
+                    choice = input('enter a number (0 or 1): ')
+                    if choice == '0':
+                        return
+                    elif choice == '1':
+                        break
+                    else:
+                        print('-------------------------------------------------------------')
+                        print('please enter 0 or 1')
+            else:
+                break
         else:
             print('-------------------------------------------------------------')
-            print('please enter a time in the future')
+            print('please enter a time later than now')
+
     length_of_service = Inputs.length_of_service(service, services)
 
     end_time = start_time + timedelta(0, length_of_service * 60)
 
-    service_record = {'start_time':date_time, 'end_time':end_time.strftime('%m/%d/%Y %H:%M'),
+    service_record = {'start_time':date_time_string, 'end_time':end_time.strftime('%m/%d/%Y %H:%M'),
                       'time_of_reserving':time_of_reserving, 'guest_name': guest_name,
                       'guest_id':guest_id}
-    guest_record = {'start_time':date_time, 'end_time':end_time.strftime('%m/%d/%Y %H:%M'),
+    guest_record = {'start_time':date_time_string, 'end_time':end_time.strftime('%m/%d/%Y %H:%M'),
                     'time_of_reserving':time_of_reserving, 'service':service}
 
     schedule = json.load(open('guests_schedules/'+guest_id+'.txt', 'r'))
-    the_guest = Guests(guest_name, guest_id, schedule)
+    the_guest = Guests(guest_name, guest_id, party_id, schedule)
 
     if service != 'mineral_bath':
         guest_available = the_guest.check_guest_schedule(start_time, end_time)
@@ -167,7 +186,7 @@ def reserve_service():
         the_guest.edit_schedule(guest_record, 'add')
         services[service].edit_schedule(service_record, 'add')
         charge = services[service].charge(length_of_service)
-        record = {'date_time': date_time, 'guest_name': guest_name,
+        record = {'date_time': date_time_string, 'guest_name': guest_name,
                   'item': service, 'charge': charge}
         party_bills = json.load(open('parties_bills/' + party_id + '.txt', 'r'))
         the_party_bills = Party_bills(party_id, party_bills)
@@ -217,10 +236,10 @@ def cancel_service():
         return
 
     service = Inputs.service()
-    date_time, start_time = Inputs.service_date_time()
+    date_time_string, start_time = Inputs.service_date_time()
 
     for i in services[service].schedule:
-        if i['guest_id'] == guest_id and i['start_time'] == date_time:
+        if i['guest_id'] == guest_id and i['start_time'] == date_time_string:
             time_of_reserving = i['time_of_reserving']
             break
     else:
@@ -255,16 +274,16 @@ def cancel_service():
             the_party_bills = Party_bills(party_id, party_bills)
 
             for i in services[service].schedule:
-                if i['guest_id'] == guest_id and i['start_time'] == date_time:
+                if i['guest_id'] == guest_id and i['start_time'] == date_time_string:
                     services[service].edit_schedule(i, 'del')
                     break
             for i in the_guest.schedule:
-                if i['start_time'] == date_time:
+                if i['start_time'] == date_time_string:
                     the_guest.edit_schedule(i, 'del')
                     break
             if charge is False:
                 for i in party_bills:
-                    if i['guest_name'] == guest_name and i['date_time'] == date_time:
+                    if i['guest_name'] == guest_name and i['date_time'] == date_time_string:
                         the_party_bills.edit_party_bills(i, 'del')
                         break
             print('-------------------------------------------------------------')
@@ -278,25 +297,12 @@ def cancel_service():
 
 def reserve_room():
     global rooms
-    while True:
-        guest_name = input('guest\'s name: ')
-        phone_number = input('phone number: ') # need function to check if the phone number is valid
-        parties = json.load(open('parties.txt', 'r'))
-        check_info = 0
-        for i in range(len(parties)):
-            if guest_name in parties[i]['members'] and phone_number == parties[i]['phone_number']:
-                party_id = parties[i]['party_id']
-                index = i
-                check_info = 1
-                break
-        else:
-            print('-------------------------------------------------------------')
-            confirm = input('wrong guest info, try again? y/n: ')
-            print('-------------------------------------------------------------')
-            if confirm == 'n':
-                return
-        if check_info == 1:
-            break
+
+    parties = json.load(open('parties.txt', 'r'))
+
+    index = len(parties) - 1
+    party_id = str(index)
+    guest_name = parties[index]['members'][0]
 
     checkin_date, checkout_date, checkin_date_string, checkout_date_string \
     = Inputs.check_in_out_date()
@@ -332,19 +338,19 @@ def reserve_room():
     for i in range(16):
         if rooms[i].check_room_schedule(checkin_date, checkout_date):
             single_count += 1
-            single_list.append(i)
+            single_list.append(rooms[i].room_number)
     #double room available
     double_count = 0
     double_list = []
     for i in range(16, 32):
         if rooms[i].check_room_schedule(checkin_date, checkout_date):
-            double_list.append(i)
+            double_list.append(rooms[i].room_number)
             double_count += 1
     quadruple_count = 0
     quadruple_list = []
     for i in range(32, 36):
         if rooms[i].check_room_schedule(checkin_date, checkout_date):
-            quadruple_list.append(i)
+            quadruple_list.append(rooms[i].room_number)
             quadruple_count += 1
     if single_count >= n_single and \
        double_count >= n_double and \
@@ -356,23 +362,34 @@ def reserve_room():
         party_record = {'checkin_date': checkin_date_string, 'checkout_date': checkout_date_string,
                         'party_id': party_id}
         for i in room_list:
-            rooms[i].edit_schedule(party_record, 'add')
+            rooms[int(i)].edit_schedule(party_record, 'add')
             for j in range(days):
                 date = checkin_date + timedelta(j)
-                charge = rooms[i].charge(date)
+                charge = rooms[int(i)].charge(date)
                 bill_record = {'date_time': date.strftime('%m/%d/%Y'), 'guest_name': guest_name,
-                               'item': rooms[i].size + ' room', 'charge': charge}
+                               'item': rooms[int(i)].size + ' room', 'charge': charge}
                 party_bills = json.load(open('parties_bills/' + party_id + '.txt', 'r'))
                 the_party_bills = Party_bills(party_id, party_bills)
                 the_party_bills.edit_party_bills(bill_record, 'add')
         json.dump(parties, open('parties.txt', 'w'))
         print('-------------------------------------------------------------')
         print('reserve successfully!')
-        print('room number: ' + ', '.join(str(x) for x in room_list))
+        print('room number: ' + ', '.join(x for x in room_list))
         print('-------------------------------------------------------------')
+        return True
     else:
         print('-------------------------------------------------------------')
-        print('room not available!')
+        print('room not available at that time!')
+        while True:
+            continuing = input('try another date? y/n')
+            if continuing == 'Y' or continuing == 'y' or continuing == 'yes':
+                break
+            elif continuing == 'N' or continuing == 'n' or continuing == 'no':
+                return True
+            else:
+                print('-------------------------------------------------------------')
+                print('type again. Y/N ')
+                print('-------------------------------------------------------------')
         print('-------------------------------------------------------------')
 
 
@@ -388,10 +405,10 @@ def cancel_room():
 
 while True:
     while True:
-        print('1.register'+'\n'
-              '2.reserve_room'+'\n'
-              '3.reserve_service'+'\n'
-              '4.cancel_service'+'\n'
+        print('1.reserve room'+'\n'
+              '2.cancel room'+'\n'
+              '3.reserve service'+'\n'
+              '4.cancel service'+'\n'
               '0.exit')
         try:
             num = int(input('choose one: '))
@@ -402,8 +419,11 @@ while True:
             print('please enter a number')
     if num == 1:
         register()
+        while True:
+            if reserve_room():
+                break
     elif num == 2:
-        reserve_room()
+        cancel_room()
     elif num == 3:
         reserve_service()
     elif num == 4:
