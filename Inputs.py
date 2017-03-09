@@ -80,7 +80,8 @@ def service_date_time():
     return date_time_string, start_time
 
 def check_in_out_date():
-    now = datetime.now()
+    today = date.today()
+    now = datetime.combine(today, datetime.min.time())
     while True:
         checkin_date_string = input('checkin date (MM/DD/YYYY): ')
         try:
