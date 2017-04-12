@@ -1,12 +1,12 @@
 import json
 import os
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta, date
 from Guests import *
 import Inputs
 from Services import *
 from Party_bills import *
 from Rooms import *
+from dateprocessing import *
 
 
 # create folders
@@ -32,7 +32,7 @@ for service in services_list:
     for kind in service[0]:
         if not os.path.isfile('services_schedules/' + kind + '.txt'):
             services[kind] = Services(kind, service[1][0], service[1][1], service[1][2], [])
-            json.dump(services[kind].schedule, open('services_schedules/' + kind + '.txt', 'w'))
+            json.dump(services[kind].schedule, open('services_schedules/' + kind + '.txt', 'w'), sort_keys=True, indent=4)
         else:
             services[kind] = Services(kind, service[1][0], service[1][1], service[1][2], \
             json.load(open('services_schedules/' + kind + '.txt', 'r')))
@@ -48,7 +48,7 @@ for i in range(36):
     room_number = ('0'*3 + str(i))[-3:]
     if not os.path.isfile('rooms_schedules/' + room_number + '.txt'):
         rooms[i] = Rooms(room_number, size, [])
-        json.dump(rooms[i].schedule, open('rooms_schedules/' + room_number + '.txt', 'w'))
+        json.dump(rooms[i].schedule, open('rooms_schedules/' + room_number + '.txt', 'w'), sort_keys=True, indent=4)
     else:
         rooms[i] = Rooms(room_number, size, json.load(open('rooms_schedules/' + room_number + '.txt', 'r')))
 
@@ -61,7 +61,6 @@ for i in range(36):
 
 
 def register():
-    global services
     party = {}
     if os.path.exists('parties.txt'):
         parties = json.load(open('parties.txt', 'r'))
@@ -102,7 +101,7 @@ def register():
                 new_party_bills = Party_bills(party['party_id'], [])
                 new_party_bills.creat_party_bills_file()
                 party['phone_number'] = input('phone number: ')
-                json.dump(parties+[party], open('parties.txt', 'w'))
+                json.dump(parties+[party], open('parties.txt', 'w'), sort_keys=True, indent=4)
                 print('-------------------------------------------------------------')
                 print('add party successfully')
                 print('-------------------------------------------------------------')
@@ -121,7 +120,7 @@ def reserve_service():
     guests = json.load(open('guests.txt', 'r'))
     parties = json.load(open('parties.txt', 'r'))
     for i in parties:
-        if guest_name in i['members'] and room_number in i['rooms'] and i['status'] != 'checkout':
+        if guest_name in i['members'] and room_number in i['rooms'] and i['status'] in ['checkin', '']:
             party_id = i['party_id']
             checkin_date_string = i['checkin_date']
             checkout_date_string = i['checkout_date']
@@ -219,7 +218,7 @@ def cancel_service():
     guests = json.load(open('guests.txt', 'r'))
     parties = json.load(open('parties.txt', 'r'))
     for i in parties:
-        if guest_name in i['members'] and room_number in i['rooms']:
+        if guest_name in i['members'] and room_number in i['rooms'] and i['status'] in ['', 'checkin']:
             party_id = i['party_id']
             break
     else:
@@ -236,7 +235,7 @@ def cancel_service():
         print('chech the guest\'s information, and try again!')
         print('-------------------------------------------------------------')
         return
-    
+
     while True:
         service = Inputs.service()
         date_time_string, start_time = Inputs.service_date_time()
@@ -258,46 +257,34 @@ def cancel_service():
        <= timedelta(0, 10 * 60)):
         print('-------------------------------------------------------------')
         print('can cancel without getting charged')
-        charge = False
+        refund = 1
     else:
         print('-------------------------------------------------------------')
         print('can cancel, but will still get charged')
-        charge = True
-    print('still wanna cancel?')
-    while True:
-        confirm = input('0. dont\'t cancel' + '\n'
-                        '1. cancel' + '\n'
-                        'enter the number: ')
-        if confirm == '0':
-            print('-------------------------------------------------------------')
-            print('no cancelation!')
-            return
-        elif confirm == '1':
-            schedule = json.load(open('guests_schedules/'+guest_id+'.txt', 'r'))
-            party_bills = json.load(open('parties_bills/'+party_id+'.txt', 'r'))
-            the_guest = Guests(guest_name, guest_id, party_id, schedule)
-            the_party_bills = Party_bills(party_id, party_bills)
+        refund = 0
+    if Inputs.cancel_confirm():
+        schedule = json.load(open('guests_schedules/'+guest_id+'.txt', 'r'))
+        party_bills = json.load(open('parties_bills/'+party_id+'.txt', 'r'))
+        the_guest = Guests(guest_name, guest_id, party_id, schedule)
 
-            for i in services[service].schedule:
-                if i['guest_id'] == guest_id and i['start_time'] == date_time_string:
-                    services[service].edit_schedule(i, 'del')
-                    break
-            for i in the_guest.schedule:
-                if i['start_time'] == date_time_string:
-                    the_guest.edit_schedule(i, 'del')
-                    break
-            if charge is False:
-                for i in party_bills:
-                    if i['guest_name'] == guest_name and i['date_time'] == date_time_string:
-                        the_party_bills.edit_party_bills(i, 'del')
-                        break
-            print('-------------------------------------------------------------')
-            print('canceled')
-            return
-        else:
-            print('-------------------------------------------------------------')
-            print('enter 0 or 1')
-            print('-------------------------------------------------------------')
+        for i in services[service].schedule:
+            if i['guest_id'] == guest_id and i['start_time'] == date_time_string:
+                services[service].edit_schedule(i, 'del')
+                break
+        for i in the_guest.schedule:
+            if i['start_time'] == date_time_string:
+                the_guest.edit_schedule(i, 'del')
+                break
+        for i in range(len(party_bills)):
+            if i['guest_name'] == guest_name and i['date_time'] == date_time_string:
+                party_bills[i]['item'] += ' (canceled)'
+                party_bills[i]['charge'] *= 1 - refund
+                json.dump(party_bills, open('parties_bills/' + party_id + '.txt', 'w'), sort_keys=True, indent=4)
+                break
+        print('-------------------------------------------------------------')
+        print('canceled')
+        print('-------------------------------------------------------------')
+        return
 
 def reserve_room():
     global rooms
@@ -375,7 +362,7 @@ def reserve_room():
                 party_bills = json.load(open('parties_bills/' + party_id + '.txt', 'r'))
                 the_party_bills = Party_bills(party_id, party_bills)
                 the_party_bills.edit_party_bills(bill_record, 'add')
-        json.dump(parties, open('parties.txt', 'w'))
+        json.dump(parties, open('parties.txt', 'w'), sort_keys=True, indent=4)
         print('-------------------------------------------------------------')
         print('reserve successfully!')
         print('room number: ' + ', '.join(x for x in room_list))
@@ -406,7 +393,6 @@ def check_in():
            phone_number == parties[i]['phone_number'] and\
            parties[i]['status'] == '':
             parties[i]['status'] = 'checkin'
-            index = i
             break
         elif guest_name in parties[i]['members'] and\
              phone_number == parties[i]['phone_number'] and\
@@ -420,7 +406,7 @@ def check_in():
             print('check the information again!')
             print('-------------------------------------------------------------')
             return
-    json.dump(parties, open('parties.txt', 'w'))
+    json.dump(parties, open('parties.txt', 'w'), sort_keys=True, indent=4)
     print('-------------------------------------------------------------')
     print('check in successfully!')
     print('room number: ' + ', '.join(x for x in parties[i]['rooms']))
@@ -428,10 +414,153 @@ def check_in():
 
 
 def check_out():
-    pass
+    guest_name = input('guest\'s name: ')
+    room_number = input('room number: ')
+    parties = json.load(open('parties.txt', 'r'))
+    for i in range(len(parties)):
+        if guest_name in parties[i]['members'] and\
+           room_number in parties[i]['rooms'] and\
+           parties[i]['status'] == 'checkin':
+            parties[i]['status'] = 'checkout'
+            break
+    else:
+        print('check the information again!')
+        return
+    json.dump(parties, open('parties.txt', 'w'), sort_keys=True, indent=4)
+    print('-------------------------------------------------------------')
+    print('check out successfully!')
+    print('-------------------------------------------------------------')
+
+
+def show_services_schedule():
+    kind = Inputs.service()
+    the_date = Inputs.input_date()
+    schedule_raw = services[kind].schedule
+    schedule = []
+    for i in schedule_raw:
+        start_time = datetime.strptime(i['start_time'], "%m/%d/%Y %H:%M")
+        end_time = datetime.strptime(i['end_time'], "%m/%d/%Y %H:%M")
+        period = Datetimeperiod(start_time, end_time, 1)
+        schedule.append(period)
+    newschedule = schedule_new([], schedule)
+    unavailable = []
+    unavailable_in_that_day = []
+    for i in newschedule:
+        if i.count == services[kind].capacity:
+            start_time = i.start_time
+            end_time = i.end_time
+            record = {'start_time': start_time, 'end_time': end_time}
+            unavailable.append(record)
+    for i in unavailable:
+        if i['start_time'].date() == the_date and i['end_time'].date() == the_date:
+            unavailable_in_that_day.append(i)
+        elif i['start_time'].date() < the_date and i['end_time'].date() == the_date:
+            record = {'start_time': datetime.combine(the_date, datetime.min.time()),\
+                      'end_time': i['end_time']}
+            unavailable_in_that_day.append(record)
+        elif i['start_time'].date() == the_date and i['end_time'].date() > the_date:
+            record = {'end_time': datetime.combine(the_date, datetime.max.time()),\
+                      'start_time': i['start_time']}
+            unavailable_in_that_day.append(record)
+    return unavailable_in_that_day
+
+def show_guest_schedule_from_now():
+    guest_name = input('guest\'s name: ')
+    room_number = input('room number: ')
+    guests = json.load(open('guests.txt', 'r'))
+    parties = json.load(open('parties.txt', 'r'))
+    for i in parties:
+        if guest_name in i['members'] and room_number in i['rooms'] and i['status'] != 'checkout':
+            party_id = i['party_id']
+            checkin_date_string = i['checkin_date']
+            checkout_date_string = i['checkout_date']
+            break
+    else:
+        print('-------------------------------------------------------------')
+        print('chech the guest\'s information, and try again!')
+        print('-------------------------------------------------------------')
+        return
+    for i in guests:
+        if party_id == i['party_id'] and guest_name == i['guest_name']:
+            guest_id = i['guest_id']
+            break
+    else:
+        print('-------------------------------------------------------------')
+        print('chech the guest\'s information, and try again!')
+        print('-------------------------------------------------------------')
+        return
+    schedule = json.load(open('guests_schedules/'+guest_id+'.txt', 'r'))
+    new_schedule = []
+    for i in schedule:
+        start_time = datetime.strptime(i['start_time'], "%m/%d/%Y %H:%M")
+        now = datetime.now()
+        if start_time >= now():
+            new_schedule.append(i)
+    print(new_schedule)
+
 
 def cancel_room():
+    global rooms
+    now = datetime.now()
+    guests = json.load(open('guests.txt', 'r'))
+    parties = json.load(open('parties.txt', 'r'))
+    guest_name = input('guest\'s name: ')
+    phone_number = input('phone number: ')
+    for i in parties:
+        if guest_name in i['members'] and phone_number == i['phone_number'] and i['status'] == '':
+            party_id = i['party_id']
+            checkin_date_string = i['checkin_date']
+            checkout_date_string = i['checkout_date']
+            room_list = i['rooms']
+            index = parties.index(i)
+            break
+    else:
+        print('-------------------------------------------------------------')
+        print('chech the guest\'s information, and try again!')
+        print('-------------------------------------------------------------')
+        return
+
+    checkin_date = datetime.strptime(checkin_date_string, "%m/%d/%Y")
+    if checkin_date - now >= timedelta(21): # cancel before 3 weeks
+        print('-------------------------------------------------------------')
+        print('you can get 100% refund')
+        refund = 1
+    elif checkin_date - now >= timedelta(2): # cancel before 48 hours
+        print('-------------------------------------------------------------')
+        print('you can only get 75% refund')
+        refund = 0.75
+    else: # less than 48 hours
+        print('-------------------------------------------------------------')
+        print('no refund!!')
+        refund = 0
+    if Inputs.cancel_confirm():
+        party_bills = json.load(open('parties_bills/' + party_id + '.txt', 'r'))
+
+        # cancel serverces which between checkin and checkout
+        # pass
+
+        # cancel rooms
+        for i in room_list:
+            for record in rooms[int(i)].schedule:
+                if record['party_id'] == party_id:
+                    rooms[int(i)].edit_schedule(record, 'del')
+                for j in range(len(party_bills)):
+                    if party_bills[j]['item'] == rooms[int(i)].size + ' room':
+                        party_bills[j]['item'] += ' (canceled)'
+                        party_bills[j]['charge'] *= 1-refund
+        json.dump(party_bills, open('parties_bills/' + party_id + '.txt', 'w'), sort_keys=True, indent=4)
+
+        parties[index]['status'] = 'canceled'
+        json.dump(parties, open('parties.txt', 'w'), sort_keys=True, indent=4)
+        print('-------------------------------------------------------------')
+        print('cancel successfully!')
+        print('-------------------------------------------------------------')
+
+
+def shortern_the_stay(): # at least check-in for one night
     pass
+
+
 
 ################################################################################################
 ################################################################################################

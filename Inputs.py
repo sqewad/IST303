@@ -81,12 +81,12 @@ def service_date_time():
 
 def check_in_out_date():
     today = date.today()
-    now = datetime.combine(today, datetime.min.time())
+    today_datetime = datetime.combine(today, datetime.min.time())
     while True:
         checkin_date_string = input('checkin date (MM/DD/YYYY): ')
         try:
             checkin_date = datetime.strptime(checkin_date_string, "%m/%d/%Y")
-            if checkin_date >= now:
+            if checkin_date >= today_datetime:
                 break
             else:
                 print('-------------------------------------------------------------')
@@ -125,3 +125,39 @@ def length_of_service(service, services):
         except ValueError:
             print('please enter a number!')
     return length_of_service
+
+def input_date():
+    today = date.today()
+    while True:
+        date_string = input('what date (MM/DD/YYYY): ')
+        try:
+            the_date = datetime.strptime(date_string, "%m/%d/%Y").date()
+            if the_date >= today:
+                break
+            else:
+                print('-------------------------------------------------------------')
+                print('enter a date later than today, try again')
+                print('-------------------------------------------------------------')
+        except ValueError:
+            print('-------------------------------------------------------------')
+            print('please check the date and try again!')
+            print('-------------------------------------------------------------')
+    return the_date
+
+def cancel_confirm():
+    print('still wanna cancel?')
+    while True:
+        confirm = input('0. dont\'t cancel' + '\n'
+                        '1. cancel' + '\n'
+                        'enter the number: ')
+        if confirm == '0':
+            print('-------------------------------------------------------------')
+            print('no cancelation!')
+            return False
+        elif confirm not in '01':
+            print('-------------------------------------------------------------')
+            print('enter 0 or 1')
+            print('-------------------------------------------------------------')
+            continue
+        elif confirm == '1':
+            return True

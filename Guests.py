@@ -1,5 +1,4 @@
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import json
 
 class Guests(object):
@@ -12,17 +11,17 @@ class Guests(object):
     def add_guest_to_guests(self, guests):
         temp = self.__dict__
         del temp['schedule']
-        json.dump(guests+[temp], open('guests.txt', 'w'))
+        json.dump(guests+[temp], open('guests.txt', 'w'), sort_keys=True, indent=4)
 
     def creat_schedule_file(self):
-        json.dump(self.schedule, open('guests_schedules/' + self.guest_id + '.txt', 'w'))
+        json.dump(self.schedule, open('guests_schedules/' + self.guest_id + '.txt', 'w'), sort_keys=True, indent=4)
 
     def edit_schedule(self, guest_record, edit):
         if edit == 'add':
             self.schedule.append(guest_record)
         elif edit == 'del':
             self.schedule.remove(guest_record)
-        json.dump(self.schedule, open('guests_schedules/'+self.guest_id+'.txt', 'w'))
+        json.dump(self.schedule, open('guests_schedules/'+self.guest_id+'.txt', 'w'), sort_keys=True, indent=4)
 
     def check_guest_schedule(self, start_time, end_time):
         for i in self.schedule:

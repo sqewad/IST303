@@ -24,7 +24,7 @@ class Rooms(object):
         elif edit == 'del':
             self.schedule.remove(record)
         # record = {'chechin_date': MM/DD/YYYY, 'checkout_date': MM/DD/YYYY, 'party_id'：'x'}
-        json.dump(self.schedule, open('rooms_schedules/' + str(self.room_number) + '.txt', 'w'))
+        json.dump(self.schedule, open('rooms_schedules/' + str(self.room_number) + '.txt', 'w'), sort_keys=True, indent=4)
 
     def charge(self, date):
         if datetime(date.year, 1, 16) <= date <= datetime(date.year, 5, 14) or \

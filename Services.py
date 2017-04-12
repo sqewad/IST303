@@ -14,7 +14,7 @@ class Services(object):
             self.schedule.append(service_record)
         elif edit == 'del':
             self.schedule.remove(service_record)
-        json.dump(self.schedule, open('services_schedules/' + self.service_name + '.txt', 'w'))
+        json.dump(self.schedule, open('services_schedules/' + self.service_name + '.txt', 'w'), sort_keys=True, indent=4)
 
     def check_service_schedule(self, start_time, end_time):
         count = 0
@@ -29,4 +29,3 @@ class Services(object):
 
     def charge(self, length_of_service):
         return self.charge_per_min * length_of_service
-       
