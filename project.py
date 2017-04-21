@@ -384,14 +384,15 @@ def reserve_room():
         print('-------------------------------------------------------------')
 
 def check_in():
-    checkin_date = datetime.now().strftime('%m/%d/%Y')
+    today_date = datetime.now()
     guest_name = input('guest\'s name: ')
     phone_number = input('phone number: ')
     parties = json.load(open('parties.txt', 'r'))
     for i in range(len(parties)):
         if guest_name in parties[i]['members'] and\
            phone_number == parties[i]['phone_number'] and\
-           parties[i]['status'] == '':
+           parties[i]['status'] == '' and\
+           datetime.strptime(parties[i]['checkin_date'], "%m/%d/%Y") <= today_date:
             parties[i]['status'] = 'checkin'
             break
         elif guest_name in parties[i]['members'] and\
