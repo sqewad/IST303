@@ -41,7 +41,7 @@ def changeReservation():
     refund = 0.75
     if days == 0:
         return
-    if 1 <= days <= diff.days-1:
+    elif 1 <= days <= diff.days-1:
         # print('You are available to manage your resevation.')
         new_checkout_date = datetime.strptime(checkout_date_str, "%m/%d/%Y") - timedelta(days)
         new_checkout_date_str = new_checkout_date.strftime('%m/%d/%Y')
@@ -67,6 +67,12 @@ def changeReservation():
                 if room_schedules[j]['party_id'] == party_id:
                     room_schedules[j]['checkout_date'] = new_checkout_date_str
             json.dump(room_schedules, open('rooms_schedules/' + i + '.txt', 'w'), sort_keys=True, indent=4)
+        print('-------------------------------------------------------------')
+        print('successfully re-schedule room')
+        print('-------------------------------------------------------------')
+    else:
+        pass
+        # re enter days, need another loop
                
 
         
