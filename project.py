@@ -277,7 +277,7 @@ def cancel_service():
                 the_guest.edit_schedule(i, 'del')
                 break
         for i in range(len(party_bills)):
-            if i['guest_name'] == guest_name and i['date_time'] == date_time_string:
+            if party_bills[i]['guest_name'] == guest_name and party_bills[i]['date_time'] == date_time_string:
                 party_bills[i]['item'] += ' (canceled)'
                 party_bills[i]['charge'] *= 1 - refund
                 json.dump(party_bills, open('parties_bills/' + party_id + '.txt', 'w'), sort_keys=True, indent=4)
