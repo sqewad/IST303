@@ -7,6 +7,7 @@ from Services import *
 from Party_bills import *
 from Rooms import *
 from dateprocessing import *
+from changeReservation import *
 
 
 # create folders
@@ -578,6 +579,7 @@ while True:
               '4. cancel service'+'\n'
               '5. check in'+'\n'
               '6. check out'+'\n'
+              '7. edit reservation'+'\n'
               '0. exit')
         try:
             num = int(input('choose one: '))
@@ -599,6 +601,10 @@ while True:
         cancel_service()
     elif num == 5:
         check_in()
+    elif num == 6:
+        check_out()
+    elif num == 7:
+        changeReservation()
     elif num == 0:
         break
 
