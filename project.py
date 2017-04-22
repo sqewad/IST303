@@ -517,7 +517,7 @@ def cancel_room():
             break
     else:
         print('-------------------------------------------------------------')
-        print('chech the guest\'s information, and try again!')
+        print('check the guest\'s information, and try again!')
         print('-------------------------------------------------------------')
         return
 
