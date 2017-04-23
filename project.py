@@ -211,7 +211,7 @@ def reserve_service():
 
 ### we may need a fuction shows when the service is avalaible
 
-def cancel_service():
+def get_information_for_service():
     global services
     time_of_canceling = datetime.now()
     guest_name = input('guest\'s name: ')
@@ -226,7 +226,7 @@ def cancel_service():
         print('-------------------------------------------------------------')
         print('chech the guest\'s information, and try again!')
         print('-------------------------------------------------------------')
-        return
+        raise ValueError
     for i in guests:
         if party_id == i['party_id'] and guest_name == i['guest_name']:
             guest_id = i['guest_id']
@@ -235,7 +235,7 @@ def cancel_service():
         print('-------------------------------------------------------------')
         print('chech the guest\'s information, and try again!')
         print('-------------------------------------------------------------')
-        return
+        raise ValueError
 
     while True:
         service = Inputs.service()
@@ -249,43 +249,45 @@ def cancel_service():
         else:
             print('-------------------------------------------------------------')
             print('no such reservation, check again')
-            print('-------------------------------------------------------------')
         if tag == 1:
             break
+    print('-------------------------------------------------------------')
+    return guest_id, guest_name, party_id, service, time_of_reserving, time_of_canceling, start_time,date_time_string
 
-    if (start_time - time_of_canceling >= timedelta(0, 90 * 60)) or \
-       (time_of_canceling - datetime.strptime(time_of_reserving, "%m/%d/%Y %H:%M") \
-       <= timedelta(0, 10 * 60)):
-        print('-------------------------------------------------------------')
-        print('can cancel without getting charged')
-        refund = 1
-    else:
-        print('-------------------------------------------------------------')
-        print('can cancel, but will still get charged')
-        refund = 0
-    if Inputs.cancel_confirm():
-        schedule = json.load(open('guests_schedules/'+guest_id+'.txt', 'r'))
-        party_bills = json.load(open('parties_bills/'+party_id+'.txt', 'r'))
-        the_guest = Guests(guest_name, guest_id, party_id, schedule)
+    # if (start_time - time_of_canceling >= timedelta(0, 90 * 60)) or \
+    #    (time_of_canceling - datetime.strptime(time_of_reserving, "%m/%d/%Y %H:%M") \
+    #    <= timedelta(0, 10 * 60)):
+    #     print('-------------------------------------------------------------')
+    #     print('can cancel without getting charged')
+    #     refund = 1
+    # else:
+    #     print('-------------------------------------------------------------')
+    #     print('can cancel, but will still get charged')
+    #     refund = 0
+    # if Inputs.cancel_confirm():
+def cancel_service(guest_id, guest_name, party_id, service, start_time, date_time_string, refund):
+    global services
+    schedule = json.load(open('guests_schedules/'+guest_id+'.txt', 'r'))
+    party_bills = json.load(open('parties_bills/'+party_id+'.txt', 'r'))
+    the_guest = Guests(guest_name, guest_id, party_id, schedule)
 
-        for i in services[service].schedule:
-            if i['guest_id'] == guest_id and i['start_time'] == date_time_string:
-                services[service].edit_schedule(i, 'del')
-                break
-        for i in the_guest.schedule:
-            if i['start_time'] == date_time_string:
-                the_guest.edit_schedule(i, 'del')
-                break
-        for i in range(len(party_bills)):
-            if party_bills[i]['guest_name'] == guest_name and party_bills[i]['date_time'] == date_time_string:
-                party_bills[i]['item'] += ' (canceled)'
-                party_bills[i]['charge'] *= 1 - refund
-                json.dump(party_bills, open('parties_bills/' + party_id + '.txt', 'w'), sort_keys=True, indent=4)
-                break
-        print('-------------------------------------------------------------')
-        print('canceled')
-        print('-------------------------------------------------------------')
-        return
+    for i in services[service].schedule:
+        if i['guest_id'] == guest_id and i['start_time'] == date_time_string:
+            services[service].edit_schedule(i, 'del')
+            break
+    for i in the_guest.schedule:
+        if i['start_time'] == date_time_string:
+            the_guest.edit_schedule(i, 'del')
+            break
+    for i in range(len(party_bills)):
+        if party_bills[i]['guest_name'] == guest_name and party_bills[i]['date_time'] == date_time_string:
+            party_bills[i]['item'] += ' (canceled)'
+            party_bills[i]['charge'] *= 1 - refund
+            json.dump(party_bills, open('parties_bills/' + party_id + '.txt', 'w'), sort_keys=True, indent=4)
+            break
+    print(guest_name, service, date_time_string, 'canceled')
+    print('-------------------------------------------------------------')
+    return
 
 def reserve_room():
     global rooms
@@ -501,8 +503,7 @@ def show_guest_schedule_from_now():
     print(new_schedule)
 
 
-def cancel_room():
-    global rooms
+def get_info_for_room_cancelation():
     now = datetime.now()
     guests = json.load(open('guests.txt', 'r'))
     parties = json.load(open('parties.txt', 'r'))
@@ -512,7 +513,7 @@ def cancel_room():
         if guest_name in i['members'] and phone_number == i['phone_number'] and i['status'] == '':
             party_id = i['party_id']
             checkin_date_string = i['checkin_date']
-            checkout_date_string = i['checkout_date']
+            # checkout_date_string = i['checkout_date']
             room_list = i['rooms']
             index = parties.index(i)
             break
@@ -520,43 +521,40 @@ def cancel_room():
         print('-------------------------------------------------------------')
         print('check the guest\'s information, and try again!')
         print('-------------------------------------------------------------')
-        return
-
+        raise ValueError
     checkin_date = datetime.strptime(checkin_date_string, "%m/%d/%Y")
-    if checkin_date - now >= timedelta(21): # cancel before 3 weeks
-        print('-------------------------------------------------------------')
-        print('you can get 100% refund')
-        refund = 1
-    elif checkin_date - now >= timedelta(2): # cancel before 48 hours
-        print('-------------------------------------------------------------')
-        print('you can only get 75% refund')
-        refund = 0.75
-    else: # less than 48 hours
-        print('-------------------------------------------------------------')
-        print('no refund!!')
-        refund = 0
-    if Inputs.cancel_confirm():
-        party_bills = json.load(open('parties_bills/' + party_id + '.txt', 'r'))
+    return guests, parties, party_id, now, checkin_date, room_list, index
 
-        # cancel serverces which between checkin and checkout
-        # pass
+def cancel_room(parties, party_id, now, checkin_date, room_list, index, refund):
+    global rooms
+    # if checkin_date - now >= timedelta(21): # cancel before 3 weeks
+    #     print('-------------------------------------------------------------')
+    #     print('you can get 100% refund')
+    #     refund = 1
+    # elif checkin_date - now >= timedelta(2): # cancel before 48 hours
+    #     print('-------------------------------------------------------------')
+    #     print('you can only get 75% refund')
+    #     refund = 0.75
+    # else: # less than 48 hours
+    #     print('-------------------------------------------------------------')
+    #     print('no refund!!')
+    #     refund = 0
+    # if Inputs.cancel_confirm():
+    party_bills = json.load(open('parties_bills/' + party_id + '.txt', 'r'))
+    for i in room_list:
+        for record in rooms[int(i)].schedule:
+            if record['party_id'] == party_id:
+                rooms[int(i)].edit_schedule(record, 'del')
+            for j in range(len(party_bills)):
+                if party_bills[j]['item'] == rooms[int(i)].size + ' room':
+                    party_bills[j]['item'] += ' (canceled)'
+                    party_bills[j]['charge'] *= 1-refund
+    json.dump(party_bills, open('parties_bills/' + party_id + '.txt', 'w'), sort_keys=True, indent=4)
 
-        # cancel rooms
-        for i in room_list:
-            for record in rooms[int(i)].schedule:
-                if record['party_id'] == party_id:
-                    rooms[int(i)].edit_schedule(record, 'del')
-                for j in range(len(party_bills)):
-                    if party_bills[j]['item'] == rooms[int(i)].size + ' room':
-                        party_bills[j]['item'] += ' (canceled)'
-                        party_bills[j]['charge'] *= 1-refund
-        json.dump(party_bills, open('parties_bills/' + party_id + '.txt', 'w'), sort_keys=True, indent=4)
-
-        parties[index]['status'] = 'canceled'
-        json.dump(parties, open('parties.txt', 'w'), sort_keys=True, indent=4)
-        print('-------------------------------------------------------------')
-        print('cancel successfully!')
-        print('-------------------------------------------------------------')
+    parties[index]['status'] = 'canceled'
+    json.dump(parties, open('parties.txt', 'w'), sort_keys=True, indent=4)
+    print('cancel room successfully!')
+    print('-------------------------------------------------------------')
 
 
 def shortern_the_stay(): # at least check-in for one night
@@ -594,11 +592,69 @@ while True:
             if reserve_room():
                 break
     elif num == 2:
-        cancel_room()
+        # cancel service first
+        try:
+            guests, parties, party_id, now, checkin_date, room_list, index = get_info_for_room_cancelation()
+        except ValueError:
+            continue
+        time_of_canceling = now
+        if checkin_date - now >= timedelta(21): # cancel before 3 weeks
+            print('-------------------------------------------------------------')
+            print('you can get 100% refund for rooms')
+            room_refund = 1
+        elif checkin_date - now >= timedelta(2): # cancel before 48 hours
+            print('-------------------------------------------------------------')
+            print('you can only get 75% refund for rooms')
+            room_refund = 0.75
+        else: # less than 48 hours
+            print('-------------------------------------------------------------')
+            print('no refund for rooms!!')
+            room_refund = 0
+        if Inputs.cancel_confirm():
+            print('-------------------------------------------------------------')
+            print('befor room cancelation, you have to cancel all the services first')
+            if Inputs.cancel_confirm():
+                print('-------------------------------------------------------------')
+                for guest in guests:
+                    if guest['party_id'] == party_id:
+                        guest_id = guest['guest_id']
+                        guest_name = guest['guest_name']
+                        guest_schedule = json.load(open('guests_schedules/'+guest_id+'.txt', 'r'))
+                        for record in guest_schedule:
+                            service = record['service']
+                            date_time_string = record['start_time']
+                            start_time = datetime.strptime(date_time_string, "%m/%d/%Y %H:%M")
+                            time_of_reserving_string = record['time_of_reserving']
+                            if (start_time - time_of_canceling >= timedelta(0, 90 * 60)) or \
+                            (time_of_canceling - datetime.strptime(time_of_reserving_string, "%m/%d/%Y %H:%M") \
+                            <= timedelta(0, 10 * 60)):
+                                service_refund = 1
+                            else:
+                                service_refund = 0
+                            cancel_service(guest_id, guest_name, party_id, service, start_time, date_time_string, service_refund)
+
+                cancel_room(parties, party_id, now, checkin_date, room_list, index, room_refund)
+
     elif num == 3:
         reserve_service()
     elif num == 4:
-        cancel_service()
+        try:
+            guest_id, guest_name, party_id, service, time_of_reserving, time_of_canceling, start_time, date_time_string = get_information_for_service()
+        except ValueError:
+            continue
+
+        if (start_time - time_of_canceling >= timedelta(0, 90 * 60)) or \
+        (time_of_canceling - datetime.strptime(time_of_reserving, "%m/%d/%Y %H:%M") \
+        <= timedelta(0, 10 * 60)):
+            print('can cancel without getting charged')
+            refund = 1
+        else:
+            print('can cancel, but will still get charged')
+            refund = 0
+
+        if Inputs.cancel_confirm():
+            print('-------------------------------------------------------------')
+            cancel_service(guest_id, guest_name, party_id, service, start_time, date_time_string, refund)
     elif num == 5:
         check_in()
     elif num == 6:
