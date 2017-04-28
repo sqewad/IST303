@@ -183,7 +183,8 @@ def reserve_service():
     if service != 'mineral_bath':
         guest_available = the_guest.check_guest_schedule(start_time, end_time)
     else: # service == 'mineral_bath'
-        guest_available = the_guest.check_mineral_bath(start_time, end_time)
+        guest_available = the_guest.check_mineral_bath(start_time, end_time) and \
+                          the_guest.check_guest_schedule(start_time, end_time)
     if guest_available and services[service].check_service_schedule(start_time, end_time):
         the_guest.edit_schedule(guest_record, 'add')
         services[service].edit_schedule(service_record, 'add')
