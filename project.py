@@ -547,6 +547,7 @@ def shortern_the_stay(): # at least check-in for one night
 ################################################################################################
 
 
+
 #main menu
 while True:
     while True:
