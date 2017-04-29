@@ -436,7 +436,9 @@ def show_services_schedule():
         end_time = datetime.strptime(i['end_time'], "%m/%d/%Y %H:%M")
         period = Datetimeperiod(start_time, end_time, 1)
         schedule.append(period)
-    newschedule = schedule_new([], schedule)
+    newschedule = schedule[:1]
+    for i in schedule[1:]:
+        newschedule = schedule_new(newschedule, [i])
     unavailable = []
     unavailable_in_that_day = []
     for i in newschedule:
