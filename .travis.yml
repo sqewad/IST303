@@ -2,7 +2,8 @@ language: python
 python:
   - "3.6"
 # command to install dependencies
-install: 
+install:
+  - pip install mock
   - pip install pytest pytest-cov
   - pip install codecov
 # command to run tests
