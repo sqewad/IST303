@@ -48,7 +48,9 @@ def twoperiod(period1, period2):
             return [period1], [Datetimeperiod(period2.start_time, period1.start_time, 1)]
         elif period2.start_time > period1.start_time:
             return [Datetimeperiod(period1.start_time, period2.start_time, period1.count), Datetimeperiod(period2.start_time, period2.end_time, period1.count + 1)], []
-
+        else:
+            period1.count += 1
+            return [period1], []
 
 def schedule_new(checked, unchecked):
     if len(unchecked) == 0:
