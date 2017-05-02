@@ -395,11 +395,11 @@ def check_in():
             print('have already checked in')
             print('-------------------------------------------------------------')
             return
-        else:
-            print('-------------------------------------------------------------')
-            print('check the information again!')
-            print('-------------------------------------------------------------')
-            return
+    else:
+        print('-------------------------------------------------------------')
+        print('check the information again!')
+        print('-------------------------------------------------------------')
+        return
     json.dump(parties, open('parties.txt', 'w'), sort_keys=True, indent=4)
     print('-------------------------------------------------------------')
     print('check in successfully!')
