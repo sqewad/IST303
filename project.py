@@ -416,6 +416,7 @@ def check_out():
            room_number in parties[i]['rooms'] and\
            parties[i]['status'] == 'checkin':
             parties[i]['status'] = 'checkout'
+            parties[i]['comments'] = input('please leave a comment: ')
             break
     else:
         print('check the information again!')
@@ -426,9 +427,7 @@ def check_out():
     print('-------------------------------------------------------------')
 
 
-def show_services_schedule():
-    kind = Inputs.service()
-    the_date = Inputs.input_date()
+def check_services_available_in_the_4_hours(kind, start_time):
     schedule_raw = services[kind].schedule
     schedule = []
     for i in schedule_raw:
@@ -440,7 +439,6 @@ def show_services_schedule():
     for i in schedule[1:]:
         newschedule = schedule_new(newschedule, [i])
     unavailable = []
-    unavailable_in_that_day = []
     for i in newschedule:
         if i.count == services[kind].capacity:
             start_time = i.start_time
@@ -448,17 +446,10 @@ def show_services_schedule():
             record = {'start_time': start_time, 'end_time': end_time}
             unavailable.append(record)
     for i in unavailable:
-        if i['start_time'].date() == the_date and i['end_time'].date() == the_date:
-            unavailable_in_that_day.append(i)
-        elif i['start_time'].date() < the_date and i['end_time'].date() == the_date:
-            record = {'start_time': datetime.combine(the_date, datetime.min.time()),\
-                      'end_time': i['end_time']}
-            unavailable_in_that_day.append(record)
-        elif i['start_time'].date() == the_date and i['end_time'].date() > the_date:
-            record = {'end_time': datetime.combine(the_date, datetime.max.time()),\
-                      'start_time': i['start_time']}
-            unavailable_in_that_day.append(record)
-    return unavailable_in_that_day
+        if start_time <= i['start_time'] <= start_time + timedelta(0, 4*3600) or \
+           start_time <= i['end_time'] <= start_time + timedelta(0, 4*3600):
+            return False
+    return True
 
 def show_guest_schedule_from_now():
     guest_name = input('guest\'s name: ')
@@ -536,9 +527,6 @@ def cancel_room(parties, party_id, now, checkin_date, room_list, index, refund):
     print('-------------------------------------------------------------')
 
 
-def shortern_the_stay(): # at least check-in for one night
-    pass
-
 
 
 ################################################################################################
@@ -558,6 +546,8 @@ def main():
                 '5. check in'+'\n'
                 '6. check out'+'\n'
                 '7. edit reservation'+'\n'
+                '8. show guest\'s service schedule from now'+'\n'
+                '9. show service available in any 4-hours'+'\n'
                 '0. exit')
             try:
                 num = int(input('choose one: '))
@@ -666,6 +656,24 @@ def main():
                                 cancel_service(guest_id, guest_name, party_id, service, start_time, date_time_string, service_refund)
 
                 changeReservation(rooms, guests, parties, party_id, checkin_date, checkout_date, roomsnum, index, days, cancel_date_str_list)
+        elif num == 8:
+            show_guest_schedule_from_now()
+        elif num == 9:
+            while True:
+                try:
+                    start_time_str = input('4-hours\' start time: ')
+                    start_time = datetime.strptime(start_time_str, "%m/%d/%Y %H:%M")
+                    break
+                except ValueError:
+                    print('invalid time, re-enter')
+                    print('-------------------------------------------------------------')
+            print('-------------------------------------------------------------')
+            available_service_list = []
+            for kind in services:
+                if check_services_available_in_the_4_hours(kind, start_time):
+                    available_service_list.append(kind)
+            print(available_service_list)
+            print('-------------------------------------------------------------')
         elif num == 0:
             break
 
