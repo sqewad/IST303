@@ -414,8 +414,18 @@ def check_out():
     for i in range(len(parties)):
         if guest_name in parties[i]['members'] and\
            room_number in parties[i]['rooms'] and\
-           parties[i]['status'] == 'checkin':
+           parties[i]['status'] == 'checkin' and\
+           datetime.strptime(parties[i]['checkout_date'], "%m/%d/%Y").date() == datetime.now().date():
+            party_id = parties[i]['party_id']
             parties[i]['status'] = 'checkout'
+            party_bills = json.load(open('parties_bills/'+party_id+'.txt', 'r'))
+            total_amount = 0
+            for record in party_bills:
+                total_amount += record['charge']
+            print('-------------------------------------------------------------')
+            print('total amount is', total_amount)
+            print('to see detail, please open parties_bills/'+party_id+'.txt')
+            print('-------------------------------------------------------------')
             parties[i]['comments'] = input('please leave a comment: ')
             break
     else:
