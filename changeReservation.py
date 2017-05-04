@@ -68,7 +68,7 @@ def changeReservation(rooms, guests, parties, party_id, checkin_date, checkout_d
 
         # numRooms = len(parties[index]['rooms'])
         for i in range(len(party_bills)):
-            if party_bills[i]['date_time'] in cancel_date_str_list:
+            if party_bills[i]['date_time'] in cancel_date_str_list and ('canceled' not in party_bills[i]['item']):
                 party_bills[i]['item'] += ' (canceled)'
                 party_bills[i]['charge'] *= 1-refund
 
