@@ -427,7 +427,8 @@ def check_out():
     print('-------------------------------------------------------------')
 
 
-def check_services_available_in_the_4_hours(kind, start_time):
+
+def show_services_new_schedule(kind):
     schedule_raw = services[kind].schedule
     schedule = []
     for i in schedule_raw:
@@ -445,9 +446,12 @@ def check_services_available_in_the_4_hours(kind, start_time):
             end_time = i.end_time
             record = {'start_time': start_time, 'end_time': end_time}
             unavailable.append(record)
+    return unavailable
+
+def check_services_available_in_the_4_hours(unavailable, the_4_hours_start_time):
     for i in unavailable:
-        if start_time <= i['start_time'] <= start_time + timedelta(0, 4*3600) or \
-           start_time <= i['end_time'] <= start_time + timedelta(0, 4*3600):
+        if the_4_hours_start_time <= i['start_time'] <= the_4_hours_start_time + timedelta(0, 4*3600) or \
+           the_4_hours_start_time <= i['end_time'] <= the_4_hours_start_time + timedelta(0, 4*3600):
             return False
     return True
 
@@ -481,9 +485,11 @@ def show_guest_schedule_from_now():
     for i in schedule:
         start_time = datetime.strptime(i['start_time'], "%m/%d/%Y %H:%M")
         now = datetime.now()
-        if start_time >= now():
+        if start_time >= now:
             new_schedule.append(i)
+    print('-------------------------------------------------------------')
     print(new_schedule)
+    print('-------------------------------------------------------------')
 
 
 def get_info_for_room_cancelation():
@@ -670,7 +676,8 @@ def main():
             print('-------------------------------------------------------------')
             available_service_list = []
             for kind in services:
-                if check_services_available_in_the_4_hours(kind, start_time):
+                unavailable = show_services_new_schedule(kind)
+                if check_services_available_in_the_4_hours(unavailable, start_time):
                     available_service_list.append(kind)
             print(available_service_list)
             print('-------------------------------------------------------------')
