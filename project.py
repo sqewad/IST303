@@ -688,8 +688,14 @@ def main():
             for kind in services:
                 unavailable = show_services_new_schedule(kind)
                 if check_services_available_in_the_4_hours(unavailable, start_time):
-                    available_service_list.append(kind)
-            print(available_service_list)
+                    length1 = services[kind].choice_of_length[0]
+                    length2 = services[kind].choice_of_length[1]
+                    record1 = [kind, str(length1)+' min', length1 * services[kind].charge_per_min]
+                    record2 = [kind, str(length2)+' min', length2 * services[kind].charge_per_min]
+                    available_service_list.append(record1)
+                    available_service_list.append(record2)
+            for record in available_service_list:
+                print(record)
             print('-------------------------------------------------------------')
         elif num == 0:
             break
