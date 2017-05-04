@@ -496,9 +496,14 @@ def show_guest_schedule_from_now():
         start_time = datetime.strptime(i['start_time'], "%m/%d/%Y %H:%M")
         now = datetime.now()
         if start_time >= now:
-            new_schedule.append(i)
+            length_raw = datetime.strptime(i['end_time'], "%m/%d/%Y %H:%M") - datetime.strptime(i['start_time'], "%m/%d/%Y %H:%M")
+            length = int(length_raw.days * 24 *60 + length_raw.seconds/60)
+            length_str = str(length) + ' mins'
+            record = [i['start_time'], i['service'], length_str, services[i['service']].charge_per_min * length]
+            new_schedule.append(record)
     print('-------------------------------------------------------------')
-    print(new_schedule)
+    for i in new_schedule:
+        print(i)
     print('-------------------------------------------------------------')
 
 
